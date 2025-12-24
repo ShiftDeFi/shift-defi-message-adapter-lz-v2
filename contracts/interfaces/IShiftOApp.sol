@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+/**
+ * @title IShiftOApp
+ * @notice Interface for Shift DeFi LayerZero OApp implementation
+ * @dev Defines the interface for cross-chain messaging adapter using LayerZero protocol
+ */
 interface IShiftOApp {
     event EidAndChainIdSet(uint32 eid, uint256 chainId);
     event RouterSet(address oldRouter, address newRouter);
@@ -12,7 +17,53 @@ interface IShiftOApp {
     error OnlyRouter(address sender);
     error RouterNotSet();
 
+    /**
+     * @notice Sets the mapping between a chain ID and LayerZero endpoint ID
+     * @dev Only callable by the owner. Establishes bidirectional mapping for chain identification
+     * @param eid The LayerZero endpoint ID
+     * @param chainId The standard chain ID
+     * @custom:error EIDCannotBeZero Thrown when eid is zero
+     * @custom:error ChainIDCannotBeZero Thrown when chainId is zero
+     */
     function setEidAndChainId(uint32 eid, uint256 chainId) external;
+
+    /**
+     * @notice Updates the message router address
+     * @dev Only callable by the owner. The router must be different from the current router
+     * @param _router The new router address
+     * @custom:error ZeroAddress Thrown when _router is the zero address
+     * @custom:error RouterAlreadySet Thrown when _router is the same as the current router
+     */
     function setRouter(address _router) external;
+
+    /**
+     * @notice Estimates the fee required to send a message to a destination chain
+     * @dev Queries LayerZero to get the messaging fee for the specified destination and message
+     * @param chainTo The destination chain ID
+     * @param gasLimit The gas limit for message execution on the destination chain
+     * @param rawMessage The raw message bytes to be sent
+     * @param payInLz If true, returns the LayerZero token fee; otherwise returns native fee
+     * @return The estimated fee amount (either in native tokens or LayerZero tokens)
+     */
     function estimateFee(uint256 chainTo, uint128 gasLimit, bytes memory rawMessage, bool payInLz) external view returns (uint256);
+
+    /**
+     * @notice Encodes fee parameters into a bytes array
+     * @dev Utility function to pack native fee, ZRO fee, and gas limit into a single bytes parameter
+     * @param nativeFee The native token fee amount
+     * @param zroFee The LayerZero token (ZRO) fee amount
+     * @param gasLimit The gas limit for message execution on the destination chain
+     * @return Encoded bytes containing the three parameters
+     */
+    function encodeParams(uint256 nativeFee, uint256 zroFee, uint128 gasLimit) external pure returns (bytes memory);
+
+    /**
+     * @notice Decodes fee parameters from a bytes array
+     * @dev Utility function to unpack native fee, ZRO fee, and gas limit from encoded bytes
+     * @param params The encoded bytes containing nativeFee, zroFee, and gasLimit
+     * @return nativeFee The decoded native token fee amount
+     * @return zroFee The decoded LayerZero token (ZRO) fee amount
+     * @return gasLimit The decoded gas limit for message execution
+     */
+    function decodeParams(bytes memory params) external pure returns (uint256, uint256, uint128);
 }

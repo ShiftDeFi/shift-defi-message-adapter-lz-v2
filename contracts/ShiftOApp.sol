@@ -19,20 +19,35 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
     mapping(uint256 chainId => uint32 eid) public chainIdToEid;
     mapping(uint32 eid => uint256 chainId) public eidToChainId;
 
-
+    /**
+     * @notice Constructs the ShiftOApp contract
+     * @dev Initializes the OApp with LayerZero endpoint, sets the owner, and configures the router
+     * @param _endpoint The LayerZero endpoint address for cross-chain messaging
+     * @param _owner The owner address who can configure the contract
+     * @param _router The Shift DeFi message router address
+     */
     constructor(address _endpoint, address _owner, address _router) OApp(_endpoint, _owner) Ownable(_owner) {
         require(_router != address(0), Errors.ZeroAddress());
         router = _router;
     }
 
+    /**
+     * @inheritdoc IShiftOApp
+     */
     function encodeParams(uint256 nativeFee, uint256 zroFee, uint128 gasLimit) public pure returns (bytes memory) {
         return abi.encode(nativeFee, zroFee, gasLimit);
     }
 
+    /**
+     * @inheritdoc IShiftOApp
+     */
     function decodeParams(bytes memory params) public pure returns (uint256, uint256, uint128) {
         return abi.decode(params, (uint256, uint256, uint128));
     }
 
+    /**
+     * @inheritdoc IShiftOApp
+     */
     function setEidAndChainId(uint32 eid, uint256 chainId) external onlyOwner {
         require(eid != 0, EIDCannotBeZero());
         require(chainId != 0, ChainIDCannotBeZero());
@@ -41,6 +56,9 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
         emit EidAndChainIdSet(eid, chainId);
     }
 
+    /**
+     * @inheritdoc IShiftOApp
+     */
     function setRouter(address _router) external onlyOwner {
         require(_router != address(0), Errors.ZeroAddress());
         address oldRouter = router;
@@ -49,6 +67,9 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
         emit RouterSet(oldRouter, router);
     }
 
+    /**
+     * @inheritdoc IShiftOApp
+     */
     function estimateFee(
         uint256 chainTo,
         uint128 gasLimit,
@@ -62,6 +83,17 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
         return messagingFee.nativeFee;
     }
 
+    /**
+     * @notice Sends a cross-chain message via LayerZero
+     * @dev Only callable by the configured router. Sends the message to the destination chain
+     *      using LayerZero's messaging protocol. Fees are paid from the contract's balance.
+     *      Implements IMessageAdapter.send
+     * @param chainTo The destination chain ID
+     * @param params Encoded parameters containing nativeFee, zroFee, and gasLimit
+     * @param rawMessage The raw message bytes to be sent
+     * @custom:error OnlyRouter Thrown when caller is not the configured router
+     * @custom:error EIDNotFound Thrown when the destination chain ID is not mapped to an EID
+     */
     function send(uint256 chainTo, bytes memory params, bytes memory rawMessage) external payable {
         require(msg.sender == router, OnlyRouter(msg.sender));
         require(chainIdToEid[chainTo] != 0, EIDNotFound(chainTo));
