@@ -42,28 +42,25 @@ interface IShiftOApp {
      * @param chainTo The destination chain ID
      * @param gasLimit The gas limit for message execution on the destination chain
      * @param rawMessage The raw message bytes to be sent
-     * @param payInLz If true, returns the LayerZero token fee; otherwise returns native fee
-     * @return The estimated fee amount (either in native tokens or LayerZero tokens)
+     * @return The estimated fee amount
      */
-    function estimateFee(uint256 chainTo, uint128 gasLimit, bytes memory rawMessage, bool payInLz) external view returns (uint256);
+    function estimateFee(uint256 chainTo, uint128 gasLimit, bytes memory rawMessage) external view returns (uint256);
 
     /**
      * @notice Encodes fee parameters into a bytes array
-     * @dev Utility function to pack native fee, ZRO fee, and gas limit into a single bytes parameter
+     * @dev Utility function to pack native fee and gas limit into a single bytes parameter
      * @param nativeFee The native token fee amount
-     * @param zroFee The LayerZero token (ZRO) fee amount
      * @param gasLimit The gas limit for message execution on the destination chain
      * @return Encoded bytes containing the three parameters
      */
-    function encodeParams(uint256 nativeFee, uint256 zroFee, uint128 gasLimit) external pure returns (bytes memory);
+    function encodeParams(uint256 nativeFee, uint128 gasLimit) external pure returns (bytes memory);
 
     /**
      * @notice Decodes fee parameters from a bytes array
-     * @dev Utility function to unpack native fee, ZRO fee, and gas limit from encoded bytes
-     * @param params The encoded bytes containing nativeFee, zroFee, and gasLimit
+     * @dev Utility function to unpack native fee and gas limit from encoded bytes
+     * @param params The encoded bytes containing nativeFee and gasLimit
      * @return nativeFee The decoded native token fee amount
-     * @return zroFee The decoded LayerZero token (ZRO) fee amount
      * @return gasLimit The decoded gas limit for message execution
      */
-    function decodeParams(bytes memory params) external pure returns (uint256, uint256, uint128);
+    function decodeParams(bytes memory params) external pure returns (uint256, uint128);
 }

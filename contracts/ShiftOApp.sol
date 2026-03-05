@@ -34,15 +34,15 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
     /**
      * @inheritdoc IShiftOApp
      */
-    function encodeParams(uint256 nativeFee, uint256 zroFee, uint128 gasLimit) public pure returns (bytes memory) {
-        return abi.encode(nativeFee, zroFee, gasLimit);
+    function encodeParams(uint256 nativeFee, uint128 gasLimit) public pure returns (bytes memory) {
+        return abi.encode(nativeFee, gasLimit);
     }
 
     /**
      * @inheritdoc IShiftOApp
      */
-    function decodeParams(bytes memory params) public pure returns (uint256, uint256, uint128) {
-        return abi.decode(params, (uint256, uint256, uint128));
+    function decodeParams(bytes memory params) public pure returns (uint256, uint128) {
+        return abi.decode(params, (uint256, uint128));
     }
 
     /**
@@ -73,13 +73,11 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
     function estimateFee(
         uint256 chainTo,
         uint128 gasLimit,
-        bytes memory rawMessage,
-        bool payInLz
+        bytes memory rawMessage
     ) external view returns (uint256) {
         uint32 eid = chainIdToEid[chainTo];
         bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(gasLimit, 0);
-        MessagingFee memory messagingFee = _quote(eid, rawMessage, options, payInLz);
-        if (payInLz) return messagingFee.lzTokenFee;
+        MessagingFee memory messagingFee = _quote(eid, rawMessage, options, false);
         return messagingFee.nativeFee;
     }
 
@@ -89,7 +87,7 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
      *      using LayerZero's messaging protocol. Fees are paid from the contract's balance.
      *      Implements IMessageAdapter.send
      * @param chainTo The destination chain ID
-     * @param params Encoded parameters containing nativeFee, zroFee, and gasLimit
+     * @param params Encoded parameters containing nativeFee and gasLimit
      * @param rawMessage The raw message bytes to be sent
      * @custom:error OnlyRouter Thrown when caller is not the configured router
      * @custom:error EIDNotFound Thrown when the destination chain ID is not mapped to an EID
@@ -97,14 +95,14 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
     function send(uint256 chainTo, bytes memory params, bytes memory rawMessage) external payable {
         require(msg.sender == router, OnlyRouter(msg.sender));
         require(chainIdToEid[chainTo] != 0, EIDNotFound(chainTo));
-        (uint256 nativeFee, uint256 zroFee, uint128 gasLimit) = decodeParams(params);
+        (uint256 nativeFee, uint128 gasLimit) = decodeParams(params);
         bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(gasLimit, 0);
         _lzSend(
             chainIdToEid[chainTo],
             rawMessage,
             options,
-            // Fee in native gas and ZRO token.
-            MessagingFee({nativeFee: nativeFee, lzTokenFee: zroFee}),
+            // Fee in native gas.
+            MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}),
             // Refund address in case of failed source message.
             payable(tx.origin)
         );
