@@ -27,8 +27,7 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
      * @param _router The Shift DeFi message router address
      */
     constructor(address _endpoint, address _owner, address _router) OApp(_endpoint, _owner) Ownable(_owner) {
-        require(_router != address(0), Errors.ZeroAddress());
-        router = _router;
+        _setRouter(_router);
     }
 
     /**
@@ -49,22 +48,14 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
      * @inheritdoc IShiftOApp
      */
     function setEidAndChainId(uint32 eid, uint256 chainId) external onlyOwner {
-        require(eid != 0, EIDCannotBeZero());
-        require(chainId != 0, ChainIDCannotBeZero());
-        chainIdToEid[chainId] = eid;
-        eidToChainId[eid] = chainId;
-        emit EidAndChainIdSet(eid, chainId);
+        _setEidAndChainId(eid, chainId);
     }
 
     /**
      * @inheritdoc IShiftOApp
      */
     function setRouter(address _router) external onlyOwner {
-        require(_router != address(0), Errors.ZeroAddress());
-        address oldRouter = router;
-        require(oldRouter != _router, RouterAlreadySet(oldRouter));
-        router = _router;
-        emit RouterSet(oldRouter, router);
+        _setRouter(_router);
     }
 
     /**
@@ -117,5 +108,21 @@ contract ShiftOApp is OApp, IMessageAdapter, IShiftOApp {
     ) internal override {
         require(router != address(0), RouterNotSet());
         IMessageRouter(router).receiveMessage(payload);
+    }
+
+    function _setRouter(address _router) internal {
+        require(_router != address(0), Errors.ZeroAddress());
+        address oldRouter = router;
+        require(oldRouter != _router, RouterAlreadySet(oldRouter));
+        router = _router;
+        emit RouterSet(oldRouter, router);
+    }
+
+    function _setEidAndChainId(uint32 eid, uint256 chainId) internal {
+        require(eid != 0, EIDCannotBeZero());
+        require(chainId != 0, ChainIDCannotBeZero());
+        chainIdToEid[chainId] = eid;
+        eidToChainId[eid] = chainId;
+        emit EidAndChainIdSet(eid, chainId);
     }
 }
