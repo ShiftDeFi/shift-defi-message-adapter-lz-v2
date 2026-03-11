@@ -13,6 +13,7 @@ interface IShiftOApp {
     error EIDNotFound(uint256 chainId);
     error EIDCannotBeZero();
     error ChainIDCannotBeZero();
+    error CrossChainConfigurationMissmatch(uint32 eid, uint256 chainId);
     error RouterAlreadySet(address oldRouter);
     error OnlyRouter(address sender);
     error RouterNotSet();
@@ -37,6 +38,22 @@ interface IShiftOApp {
     function setRouter(address _router) external;
 
     /**
+     * @notice Updates the LayerZero send library for a given endpoint id
+     * @dev Only callable by the owner. Forwards the configuration to the LayerZero endpoint
+     * @param sendLibrary The address of the new send library
+     * @param eid The LayerZero endpoint id to configure
+     */
+    function setSendLibrary(address sendLibrary, uint32 eid) external;
+
+    /**
+     * @notice Updates the LayerZero receive library for a given endpoint id
+     * @dev Only callable by the owner. Forwards the configuration to the LayerZero endpoint
+     * @param receiveLibrary The address of the new receive library
+     * @param eid The LayerZero endpoint id to configure
+     */
+    function setReceiveLibrary(address receiveLibrary, uint32 eid) external;
+
+    /**
      * @notice Estimates the fee required to send a message to a destination chain
      * @dev Queries LayerZero to get the messaging fee for the specified destination and message
      * @param chainTo The destination chain ID
@@ -49,18 +66,20 @@ interface IShiftOApp {
     /**
      * @notice Encodes fee parameters into a bytes array
      * @dev Utility function to pack native fee and gas limit into a single bytes parameter
+     * @param refundAddress The address that should receive any fee refund
      * @param nativeFee The native token fee amount
      * @param gasLimit The gas limit for message execution on the destination chain
      * @return Encoded bytes containing the three parameters
      */
-    function encodeParams(uint256 nativeFee, uint128 gasLimit) external pure returns (bytes memory);
+    function encodeParams(address refundAddress, uint256 nativeFee, uint128 gasLimit) external pure returns (bytes memory);
 
     /**
      * @notice Decodes fee parameters from a bytes array
      * @dev Utility function to unpack native fee and gas limit from encoded bytes
      * @param params The encoded bytes containing nativeFee and gasLimit
+     * @return refundAddress The decoded refund address
      * @return nativeFee The decoded native token fee amount
      * @return gasLimit The decoded gas limit for message execution
      */
-    function decodeParams(bytes memory params) external pure returns (uint256, uint128);
+    function decodeParams(bytes memory params) external pure returns (address, uint256, uint128);
 }
