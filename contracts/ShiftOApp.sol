@@ -34,7 +34,7 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
         address _router
     ) OApp(_endpoint, _owner) Ownable(_owner) {
         _setRouter(_router);
-        _setDelegate(address(this));
+        ILayerZeroEndpointV2(endpoint).setDelegate(address(this));
     }
 
     /**
@@ -139,7 +139,7 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
         address oldRouter = router;
         require(oldRouter != _router, RouterAlreadySet(oldRouter));
         router = _router;
-        emit RouterSet(oldRouter, router);
+        emit RouterSet(oldRouter, _router);
     }
 
     function _setEidAndChainId(uint32 eid, uint256 chainId) internal {
@@ -148,11 +148,6 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
         chainIdToEid[chainId] = eid;
         eidToChainId[eid] = chainId;
         emit EidAndChainIdSet(eid, chainId);
-    }
-
-    function _setDelegate(address delegate) internal {
-        require(delegate != address(0), Errors.ZeroAddress());
-        ILayerZeroEndpointV2(endpoint).setDelegate(delegate);
     }
 
     function _setSendLibrary(address sendLibrary, uint32 eid) internal {
