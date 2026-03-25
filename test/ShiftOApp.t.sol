@@ -8,6 +8,7 @@ import {Origin} from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
 import {ILayerZeroEndpointV2} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Errors} from "@shift-defi/core/contracts/libraries/Errors.sol";
+import {IMessageRouter} from "@shift-defi/core/contracts/interfaces/IMessageRouter.sol";
 
 import {Base} from "./Base.t.sol";
 import {IShiftOApp} from "../contracts/interfaces/IShiftOApp.sol";
@@ -115,22 +116,16 @@ contract ShiftOAppTest is Base {
             nonce: uint64(vm.randomUint(0, type(uint64).max))
         });
 
+        bytes32 expectedGuid = bytes32("guid");
+
         vm.selectFork(l2ForkId);
-        vm.recordLogs();
+
+        vm.expectCall(
+            address(l2MockMessageRouter),
+            abi.encodeWithSelector(IMessageRouter.receiveMessage.selector, message)
+        );
         vm.prank(l2Fork.lzEndpoint);
-        l2Peer.lzReceive(origin, bytes32("guid"), message, vm.randomAddress(), bytes(""));
-
-        Vm.Log[] memory entries = vm.getRecordedLogs();
-        bool foundMessageReceived;
-        bytes32 expectedTopic = keccak256("MessageReceived(uint256,uint256,address,address,address,bytes32)");
-        for (uint256 i = 0; i < entries.length; i++) {
-            if (entries[i].topics.length > 0 && entries[i].topics[0] == expectedTopic) {
-                foundMessageReceived = true;
-                break;
-            }
-        }
-
-        assertTrue(foundMessageReceived, "test_lzReceive_Success: MessageReceived event should be emitted by router");
+        l2Peer.lzReceive(origin, expectedGuid, message, vm.randomAddress(), bytes(""));
     }
 
     function _sendMessage(bytes memory message) internal returns (uint256) {
