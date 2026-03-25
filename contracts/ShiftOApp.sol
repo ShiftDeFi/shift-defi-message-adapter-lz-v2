@@ -23,7 +23,8 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
 
     /**
      * @notice Constructs the ShiftOApp contract
-     * @dev Initializes the OApp with LayerZero endpoint, sets the owner, and configures the router
+     * @dev Initializes the OApp with LayerZero endpoint, sets the owner, configures the router,
+     *      and sets the endpoint delegate to this contract.
      * @param _endpoint The LayerZero endpoint address for cross-chain messaging
      * @param _owner The owner address who can configure the contract
      * @param _router The Shift DeFi message router address
@@ -101,8 +102,6 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
      * @param chainTo The destination chain ID
      * @param params Encoded parameters containing nativeFee and gasLimit
      * @param rawMessage The raw message bytes to be sent
-     * @custom:error OnlyRouter Thrown when caller is not the configured router
-     * @custom:error EIDNotFound Thrown when the destination chain ID is not mapped to an EID
      */
     function send(uint256 chainTo, bytes memory params, bytes memory rawMessage) external payable nonReentrant {
         require(msg.sender == router, OnlyRouter(msg.sender));
