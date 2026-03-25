@@ -7,7 +7,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {Origin} from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
 import {ILayerZeroEndpointV2} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Errors} from "@shift-defi/core/contracts/libraries/helpers/Errors.sol";
+import {Errors} from "@shift-defi/core/contracts/libraries/Errors.sol";
 
 import {Base} from "./Base.t.sol";
 import {IShiftOApp} from "../contracts/interfaces/IShiftOApp.sol";
@@ -59,16 +59,8 @@ contract ShiftOAppTest is Base {
         vm.selectFork(l1ForkId);
         address l1Endpoint = address(l1Peer.endpoint());
         address l1Delegate = ILayerZeroEndpointV2Extended(l1Endpoint).delegates(address(l1Peer));
-        assertEq(
-            l1Delegate,
-            address(l1Peer),
-            "test_Configuration_Success: l1 delegate should be set to l1Peer"
-        );
-        assertEq(
-            l1Peer.router(),
-            SENDER,
-            "test_Configuration_Success: l1 router should be set to SENDER"
-        );
+        assertEq(l1Delegate, address(l1Peer), "test_Configuration_Success: l1 delegate should be set to l1Peer");
+        assertEq(l1Peer.router(), SENDER, "test_Configuration_Success: l1 router should be set to SENDER");
         assertEq(
             l1Peer.chainIdToEid(l2Fork.chainId),
             l2Fork.eid,
@@ -79,20 +71,12 @@ contract ShiftOAppTest is Base {
             l2Fork.chainId,
             "test_Configuration_Success: l1 eidToChainId for l2 should be set"
         );
-        assertEq(
-            l1Peer.owner(),
-            OWNER,
-            "test_Configuration_Success: owner set incorrect"
-        );
+        assertEq(l1Peer.owner(), OWNER, "test_Configuration_Success: owner set incorrect");
 
         vm.selectFork(l2ForkId);
         address l2Endpoint = address(l2Peer.endpoint());
         address l2Delegate = ILayerZeroEndpointV2Extended(l2Endpoint).delegates(address(l2Peer));
-        assertEq(
-            l2Delegate,
-            address(l2Peer),
-            "test_Configuration_Success: l2 delegate should be set to l2Peer"
-        );
+        assertEq(l2Delegate, address(l2Peer), "test_Configuration_Success: l2 delegate should be set to l2Peer");
         assertEq(
             l2Peer.router(),
             address(l2MockMessageRouter),
@@ -108,11 +92,7 @@ contract ShiftOAppTest is Base {
             l1Fork.chainId,
             "test_Configuration_Success: l2 eidToChainId for l1 should be set"
         );
-        assertEq(
-            l2Peer.owner(),
-            OWNER,
-            "test_Configuration_Success: owner set incorrect"
-        );
+        assertEq(l2Peer.owner(), OWNER, "test_Configuration_Success: owner set incorrect");
     }
 
     function test_Send_Success() public {
@@ -150,10 +130,7 @@ contract ShiftOAppTest is Base {
             }
         }
 
-        assertTrue(
-            foundMessageReceived,
-            "test_lzReceive_Success: MessageReceived event should be emitted by router"
-        );
+        assertTrue(foundMessageReceived, "test_lzReceive_Success: MessageReceived event should be emitted by router");
     }
 
     function _sendMessage(bytes memory message) internal returns (uint256) {
@@ -175,30 +152,16 @@ contract ShiftOAppTest is Base {
         uint128 gasLimit = GAS_LIMIT;
         bytes memory params = l1Peer.encodeParams(refund, nativeFee, gasLimit);
         (address decodedRefund, uint256 decodedFee, uint128 decodedGas) = l1Peer.decodeParams(params);
-        assertEq(
-            decodedRefund,
-            refund,
-            "test_EncodeParams_RoundTripDecode: refund address mismatch"
-        );
-        assertEq(
-            decodedFee,
-            nativeFee,
-            "test_EncodeParams_RoundTripDecode: native fee mismatch"
-        );
-        assertEq(
-            decodedGas,
-            gasLimit,
-            "test_EncodeParams_RoundTripDecode: gas limit mismatch"
-        );
+        assertEq(decodedRefund, refund, "test_EncodeParams_RoundTripDecode: refund address mismatch");
+        assertEq(decodedFee, nativeFee, "test_EncodeParams_RoundTripDecode: native fee mismatch");
+        assertEq(decodedGas, gasLimit, "test_EncodeParams_RoundTripDecode: gas limit mismatch");
     }
 
     function test_SetEidAndChainId_RevertIf_CallerIsNotOwner() public {
         vm.selectFork(l1ForkId);
         address notOwner = makeAddr("notOwner");
         vm.prank(notOwner);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, notOwner)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, notOwner));
         l1Peer.setEidAndChainId(999, 999);
     }
 
@@ -242,9 +205,7 @@ contract ShiftOAppTest is Base {
         vm.selectFork(l1ForkId);
         address newRouter = makeAddr("newRouter");
         vm.prank(newRouter);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, newRouter)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, newRouter));
         l1Peer.setRouter(newRouter);
     }
 
@@ -271,20 +232,14 @@ contract ShiftOAppTest is Base {
 
         vm.prank(OWNER);
         l1Peer.setRouter(newRouter);
-        assertEq(
-            l1Peer.router(),
-            newRouter,
-            "test_SetRouter_UpdatesRouterAndEmitsEvent: router should be updated"
-        );
+        assertEq(l1Peer.router(), newRouter, "test_SetRouter_UpdatesRouterAndEmitsEvent: router should be updated");
     }
 
     function test_SetSendLibrary_RevertIf_CallerIsNotOwner() public {
         vm.selectFork(l1ForkId);
         address stranger = makeAddr("stranger");
         vm.prank(stranger);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, stranger)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, stranger));
         l1Peer.setSendLibrary(l1Fork.sendLibrary, l2Fork.eid);
     }
 
@@ -292,9 +247,7 @@ contract ShiftOAppTest is Base {
         vm.selectFork(l1ForkId);
         address stranger = makeAddr("stranger");
         vm.prank(stranger);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, stranger)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, stranger));
         l1Peer.setReceiveLibrary(l1Fork.receiveLibrary, l2Fork.eid);
     }
 
@@ -302,20 +255,14 @@ contract ShiftOAppTest is Base {
         vm.selectFork(l1ForkId);
         bytes memory message = abi.encode("test");
         uint256 fee = l1Peer.estimateFee(l2Fork.chainId, GAS_LIMIT, message);
-        assertGt(
-            fee,
-            0,
-            "test_EstimateFee_ReturnsNonZeroWhenChainConfigured: fee should be > 0"
-        );
+        assertGt(fee, 0, "test_EstimateFee_ReturnsNonZeroWhenChainConfigured: fee should be > 0");
     }
 
     function test_EstimateFee_RevertIf_ChainNotConfigured() public {
         vm.selectFork(l1ForkId);
         uint256 unknownChainId = 999999;
         bytes memory message = abi.encode("test");
-        vm.expectRevert(
-            abi.encodeWithSelector(IShiftOApp.EIDCannotBeZero.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(IShiftOApp.EIDCannotBeZero.selector));
         l1Peer.estimateFee(unknownChainId, GAS_LIMIT, message);
     }
 

@@ -9,7 +9,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 import {IMessageAdapter} from "@shift-defi/core/contracts/interfaces/IMessageAdapter.sol";
 import {IMessageRouter} from "@shift-defi/core/contracts/interfaces/IMessageRouter.sol";
-import {Errors} from "@shift-defi/core/contracts/libraries/helpers/Errors.sol";
+import {Errors} from "@shift-defi/core/contracts/libraries/Errors.sol";
 
 import {IShiftOApp} from "./interfaces/IShiftOApp.sol";
 
@@ -28,11 +28,7 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
      * @param _owner The owner address who can configure the contract
      * @param _router The Shift DeFi message router address
      */
-    constructor(
-        address _endpoint,
-        address _owner,
-        address _router
-    ) OApp(_endpoint, _owner) Ownable(_owner) {
+    constructor(address _endpoint, address _owner, address _router) OApp(_endpoint, _owner) Ownable(_owner) {
         _setRouter(_router);
         ILayerZeroEndpointV2(endpoint).setDelegate(address(this));
     }
@@ -40,7 +36,11 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
     /**
      * @inheritdoc IShiftOApp
      */
-    function encodeParams(address refundAddress, uint256 nativeFee, uint128 gasLimit) public pure returns (bytes memory) {
+    function encodeParams(
+        address refundAddress,
+        uint256 nativeFee,
+        uint128 gasLimit
+    ) public pure returns (bytes memory) {
         return abi.encode(refundAddress, nativeFee, gasLimit);
     }
 
@@ -82,14 +82,13 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
     /**
      * @inheritdoc IShiftOApp
      */
-    function estimateFee(
-        uint256 chainTo,
-        uint128 gasLimit,
-        bytes memory rawMessage
-    ) external view returns (uint256) {
+    function estimateFee(uint256 chainTo, uint128 gasLimit, bytes memory rawMessage) external view returns (uint256) {
         uint32 eid = chainIdToEid[chainTo];
         _validateEid(eid);
-        bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(gasLimit, 0).addExecutorOrderedExecutionOption();
+        bytes memory options = OptionsBuilder
+            .newOptions()
+            .addExecutorLzReceiveOption(gasLimit, 0)
+            .addExecutorOrderedExecutionOption();
         MessagingFee memory messagingFee = _quote(eid, rawMessage, options, false);
         return messagingFee.nativeFee;
     }
@@ -110,7 +109,10 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
         _validateEid(chainIdToEid[chainTo]);
         (address refundAddress, uint256 nativeFee, uint128 gasLimit) = decodeParams(params);
         require(refundAddress != address(0), RefundAddressCannotBeZero());
-        bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(gasLimit, 0).addExecutorOrderedExecutionOption();
+        bytes memory options = OptionsBuilder
+            .newOptions()
+            .addExecutorLzReceiveOption(gasLimit, 0)
+            .addExecutorOrderedExecutionOption();
         _lzSend(
             chainIdToEid[chainTo],
             rawMessage,
