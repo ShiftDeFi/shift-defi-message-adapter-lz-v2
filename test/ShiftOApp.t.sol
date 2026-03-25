@@ -220,7 +220,10 @@ contract ShiftOAppTest is Base {
         vm.selectFork(l1ForkId);
         uint32 eid = 30199;
         uint256 chainId = 99999;
-        vm.recordLogs();
+
+        vm.expectEmit();
+        emit IShiftOApp.EidAndChainIdSet(eid, chainId);
+
         vm.prank(OWNER);
         l1Peer.setEidAndChainId(eid, chainId);
         assertEq(
@@ -232,13 +235,6 @@ contract ShiftOAppTest is Base {
             l1Peer.eidToChainId(eid),
             chainId,
             "test_SetEidAndChainId_UpdatesMappingsAndEmitsEvent: eidToChainId mapping incorrect"
-        );
-        Vm.Log[] memory entries = vm.getRecordedLogs();
-        assertEq(entries.length, 1, "test_SetEidAndChainId_UpdatesMappingsAndEmitsEvent: logs length mismatch");
-        assertEq(
-            entries[0].topics[0],
-            keccak256("EidAndChainIdSet(uint32,uint256)"),
-            "test_SetEidAndChainId_UpdatesMappingsAndEmitsEvent: wrong event topic"
         );
     }
 
@@ -268,21 +264,17 @@ contract ShiftOAppTest is Base {
 
     function test_SetRouter_UpdatesRouterAndEmitsEvent() public {
         vm.selectFork(l1ForkId);
+        address oldRouter = l1Peer.router();
         address newRouter = makeAddr("newRouter");
-        vm.recordLogs();
+        vm.expectEmit();
+        emit IShiftOApp.RouterSet(oldRouter, newRouter);
+
         vm.prank(OWNER);
         l1Peer.setRouter(newRouter);
         assertEq(
             l1Peer.router(),
             newRouter,
             "test_SetRouter_UpdatesRouterAndEmitsEvent: router should be updated"
-        );
-        Vm.Log[] memory entries = vm.getRecordedLogs();
-        assertEq(entries.length, 1, "test_SetRouter_UpdatesRouterAndEmitsEvent: logs length mismatch");
-        assertEq(
-            entries[0].topics[0],
-            keccak256("RouterSet(address,address)"),
-            "test_SetRouter_UpdatesRouterAndEmitsEvent: wrong event topic"
         );
     }
 
