@@ -109,6 +109,7 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
         require(msg.sender == router, OnlyRouter(msg.sender));
         _validateEid(chainIdToEid[chainTo]);
         (address refundAddress, uint256 nativeFee, uint128 gasLimit) = decodeParams(params);
+        require(refundAddress != address(0), RefundAddressCannotBeZero());
         bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(gasLimit, 0).addExecutorOrderedExecutionOption();
         _lzSend(
             chainIdToEid[chainTo],

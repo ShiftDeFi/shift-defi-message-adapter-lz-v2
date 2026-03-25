@@ -10,13 +10,13 @@ interface IShiftOApp {
     event EidAndChainIdSet(uint32 eid, uint256 chainId);
     event RouterSet(address oldRouter, address newRouter);
 
-    error EIDNotFound(uint256 chainId);
     error EIDCannotBeZero();
     error ChainIDCannotBeZero();
     error CrossChainConfigurationMissmatch(uint32 eid, uint256 chainId);
     error RouterAlreadySet(address oldRouter);
     error OnlyRouter(address sender);
     error RouterNotSet();
+    error RefundAddressCannotBeZero();
 
     /**
      * @notice Sets the mapping between a chain ID and LayerZero endpoint ID
