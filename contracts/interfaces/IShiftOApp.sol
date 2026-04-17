@@ -11,6 +11,7 @@ import {SetConfigParam} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interf
 interface IShiftOApp {
     event EidAndChainIdSet(uint32 eid, uint256 chainId);
     event RouterSet(address oldRouter, address newRouter);
+    event LibraryConfigUpdated(address indexed lib);
 
     error EIDCannotBeZero();
     error ChainIDCannotBeZero();

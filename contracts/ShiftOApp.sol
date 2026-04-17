@@ -55,6 +55,7 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
     /// @inheritdoc IShiftOApp
     function setConfig(address _lib, SetConfigParam[] calldata _params) external onlyOwner {
         ILayerZeroEndpointV2(endpoint).setConfig(address(this), _lib, _params);
+        emit LibraryConfigUpdated(_lib);
     }
 
     /**
