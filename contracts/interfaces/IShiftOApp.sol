@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+import {SetConfigParam} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessageLibManager.sol";
+
 /**
  * @title IShiftOApp
  * @notice Interface for Shift DeFi LayerZero OApp implementation
@@ -9,6 +11,7 @@ pragma solidity ^0.8.22;
 interface IShiftOApp {
     event EidAndChainIdSet(uint32 eid, uint256 chainId);
     event RouterSet(address oldRouter, address newRouter);
+    event LibraryConfigUpdated(address indexed lib);
 
     error EIDCannotBeZero();
     error ChainIDCannotBeZero();
@@ -71,7 +74,11 @@ interface IShiftOApp {
      * @param gasLimit The gas limit for message execution on the destination chain
      * @return Encoded bytes containing the three parameters
      */
-    function encodeParams(address refundAddress, uint256 nativeFee, uint128 gasLimit) external pure returns (bytes memory);
+    function encodeParams(
+        address refundAddress,
+        uint256 nativeFee,
+        uint128 gasLimit
+    ) external pure returns (bytes memory);
 
     /**
      * @notice Decodes fee parameters from a bytes array
@@ -82,4 +89,13 @@ interface IShiftOApp {
      * @return gasLimit The decoded gas limit for message execution
      */
     function decodeParams(bytes memory params) external pure returns (address, uint256, uint128);
+
+    /**
+     * @notice Sets LayerZero configuration parameters for a specified library
+     * @dev Only callable by the contract owner. Passes configuration parameters to the LayerZero endpoint's setConfig function.
+     * @param _lib The address of the LayerZero library to configure
+     * @param _params An array of configuration parameters for the given library
+     */
+
+    function setConfig(address _lib, SetConfigParam[] calldata _params) external;
 }
