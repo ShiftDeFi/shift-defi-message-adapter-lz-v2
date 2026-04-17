@@ -11,7 +11,7 @@ import {IMessageAdapter} from "@shift-defi/core/contracts/interfaces/IMessageAda
 import {IMessageRouter} from "@shift-defi/core/contracts/interfaces/IMessageRouter.sol";
 import {Errors} from "@shift-defi/core/contracts/libraries/Errors.sol";
 
-import {IShiftOApp} from "./interfaces/IShiftOApp.sol";
+import {IShiftOApp, SetConfigParam} from "./interfaces/IShiftOApp.sol";
 
 contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
     using OptionsBuilder for bytes;
@@ -50,6 +50,12 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
      */
     function decodeParams(bytes memory params) public pure returns (address, uint256, uint128) {
         return abi.decode(params, (address, uint256, uint128));
+    }
+
+    /// @inheritdoc IShiftOApp
+    function setConfig(address _lib, SetConfigParam[] calldata _params) external onlyOwner {
+        ILayerZeroEndpointV2(endpoint).setConfig(address(this), _lib, _params);
+        emit LibraryConfigUpdated(_lib);
     }
 
     /**
