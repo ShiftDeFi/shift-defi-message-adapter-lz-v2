@@ -147,8 +147,9 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
      * @param _nonce The nonce to be accepted.
      */
     function _acceptNonce(uint32 _srcEid, bytes32 _sender, uint64 _nonce) internal {
-        receivedNonce[_srcEid][_sender] += 1;
-        require(_nonce == receivedNonce[_srcEid][_sender], InvalidNonce(_srcEid, _sender, _nonce));
+        uint64 newNonce = receivedNonce[_srcEid][_sender] + 1;
+        require(newNonce == _nonce, InvalidNonce(_srcEid, _sender, _nonce));
+        receivedNonce[_srcEid][_sender] = newNonce;
     }
 
     function _lzReceive(
