@@ -20,6 +20,7 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
 
     mapping(uint256 chainId => uint32 eid) public chainIdToEid;
     mapping(uint32 eid => uint256 chainId) public eidToChainId;
+    mapping(uint32 srcEid => mapping(bytes32 sender => uint64 nonce)) public receivedNonce;
 
     /**
      * @notice Constructs the ShiftOApp contract
@@ -87,6 +88,16 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
     }
 
     /**
+     * @dev Public function to get the next expected nonce for a given source endpoint and sender.
+     * @param _srcEid Source endpoint ID.
+     * @param _sender Sender's address in bytes32 format.
+     * @return uint64 Next expected nonce.
+     */
+    function nextNonce(uint32 _srcEid, bytes32 _sender) public view virtual override returns (uint64) {
+        return receivedNonce[_srcEid][_sender] + 1;
+    }
+
+    /**
      * @inheritdoc IShiftOApp
      */
     function estimateFee(uint256 chainTo, uint128 gasLimit, bytes memory rawMessage) external view returns (uint256) {
@@ -129,6 +140,18 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
         );
     }
 
+    /**
+     * @dev Internal function to accept nonce from the specified source endpoint and sender.
+     * @param _srcEid Source endpoint ID.
+     * @param _sender Sender's address in bytes32 format.
+     * @param _nonce The nonce to be accepted.
+     */
+    function _acceptNonce(uint32 _srcEid, bytes32 _sender, uint64 _nonce) internal {
+        uint64 newNonce = receivedNonce[_srcEid][_sender] + 1;
+        require(newNonce == _nonce, InvalidNonce(_srcEid, _sender, _nonce));
+        receivedNonce[_srcEid][_sender] = newNonce;
+    }
+
     function _lzReceive(
         Origin calldata origin,
         bytes32,
@@ -138,6 +161,7 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
     ) internal override {
         require(router != address(0), RouterNotSet());
         _validateEid(origin.srcEid);
+        _acceptNonce(origin.srcEid, origin.sender, origin.nonce);
         IMessageRouter(router).receiveMessage(payload);
     }
 

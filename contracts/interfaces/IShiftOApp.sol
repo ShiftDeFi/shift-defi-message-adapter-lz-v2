@@ -20,6 +20,7 @@ interface IShiftOApp {
     error OnlyRouter(address sender);
     error RouterNotSet();
     error RefundAddressCannotBeZero();
+    error InvalidNonce(uint32 srcEid, bytes32 sender, uint64 nonce);
 
     /**
      * @notice Sets the mapping between a chain ID and LayerZero endpoint ID
