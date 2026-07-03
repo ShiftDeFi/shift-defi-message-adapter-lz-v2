@@ -4,6 +4,7 @@ pragma solidity ^0.8.22;
 import {OApp, Origin, MessagingFee} from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
 import {OptionsBuilder} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OptionsBuilder.sol";
 import {ILayerZeroEndpointV2} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
+import {IMessagingChannel} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessagingChannel.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -57,6 +58,18 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
     function setConfig(address _lib, SetConfigParam[] calldata _params) external onlyOwner {
         ILayerZeroEndpointV2(endpoint).setConfig(address(this), _lib, _params);
         emit LibraryConfigUpdated(_lib);
+    }
+
+    /**
+     * @inheritdoc IShiftOApp
+     */
+    function skipInboundMessage(uint32 srcEid, bytes32 sender, uint64 nonce) external onlyOwner {
+        uint64 expected = nextNonce(srcEid, sender);
+        require(nonce == expected, InvalidSkipNonce(srcEid, sender, nonce));
+
+        IMessagingChannel(address(endpoint)).skip(address(this), srcEid, sender, nonce);
+
+        receivedNonce[srcEid][sender] = nonce;
     }
 
     /**

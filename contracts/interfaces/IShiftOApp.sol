@@ -21,6 +21,7 @@ interface IShiftOApp {
     error RouterNotSet();
     error RefundAddressCannotBeZero();
     error InvalidNonce(uint32 srcEid, bytes32 sender, uint64 nonce);
+    error InvalidSkipNonce(uint32 srcEid, bytes32 sender, uint64 nonce);
 
     /**
      * @notice Sets the mapping between a chain ID and LayerZero endpoint ID
@@ -99,4 +100,12 @@ interface IShiftOApp {
      */
 
     function setConfig(address _lib, SetConfigParam[] calldata _params) external;
+
+    /**
+     * @notice skips exactly the next‐in‐line message, and keeps LZ mapping in perfect sync
+     * @param srcEid the LayerZero source chain ID
+     * @param sender the address of the remote sender (packed as bytes32)
+     * @param nonce  the nonce to skip — must equal nextNonce(_srcEid,_sender)
+     */
+    function skipInboundMessage(uint32 srcEid, bytes32 sender, uint64 nonce) external;
 }
