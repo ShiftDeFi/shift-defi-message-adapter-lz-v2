@@ -23,6 +23,13 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
     mapping(uint32 eid => uint256 chainId) public eidToChainId;
     mapping(uint32 srcEid => mapping(bytes32 sender => uint64 nonce)) public receivedNonce;
 
+    address public nonceManager;
+
+    modifier onlyNonceManager() {
+        require(msg.sender == nonceManager, OnlyNonceManager(msg.sender));
+        _;
+    }
+
     /**
      * @notice Constructs the ShiftOApp contract
      * @dev Initializes the OApp with LayerZero endpoint, sets the owner, configures the router,
@@ -30,10 +37,32 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
      * @param _endpoint The LayerZero endpoint address for cross-chain messaging
      * @param _owner The owner address who can configure the contract
      * @param _router The Shift DeFi message router address
+     * @param _nonceManager The nonce manager address who can skip inbound messages
      */
-    constructor(address _endpoint, address _owner, address _router) OApp(_endpoint, _owner) Ownable(_owner) {
+    constructor(
+        address _endpoint,
+        address _owner,
+        address _router,
+        address _nonceManager
+    ) OApp(_endpoint, _owner) Ownable(_owner) {
         _setRouter(_router);
+        _setNonceManager(_nonceManager);
         ILayerZeroEndpointV2(endpoint).setDelegate(address(this));
+    }
+
+    /**
+     * @inheritdoc IShiftOApp
+     */
+    function setNonceManager(address _nonceManager) external onlyOwner {
+        _setNonceManager(_nonceManager);
+    }
+
+    function _setNonceManager(address _nonceManager) internal {
+        require(_nonceManager != address(0), Errors.ZeroAddress());
+        address previousNonceManager = nonceManager;
+        require(previousNonceManager != _nonceManager, NonceManagerAlreadySet(previousNonceManager));
+        nonceManager = _nonceManager;
+        emit NonceManagerUpdated(previousNonceManager, nonceManager);
     }
 
     /**
@@ -63,7 +92,7 @@ contract ShiftOApp is OApp, ReentrancyGuard, IMessageAdapter, IShiftOApp {
     /**
      * @inheritdoc IShiftOApp
      */
-    function skipInboundMessage(uint32 srcEid, bytes32 sender, uint64 nonce) external onlyOwner {
+    function skipInboundMessage(uint32 srcEid, bytes32 sender, uint64 nonce) external onlyNonceManager {
         uint64 expected = nextNonce(srcEid, sender);
         require(nonce == expected, InvalidSkipNonce(srcEid, sender, nonce));
 

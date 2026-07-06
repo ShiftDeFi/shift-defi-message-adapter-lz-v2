@@ -12,6 +12,7 @@ interface IShiftOApp {
     event EidAndChainIdSet(uint32 eid, uint256 chainId);
     event RouterSet(address oldRouter, address newRouter);
     event LibraryConfigUpdated(address indexed lib);
+    event NonceManagerUpdated(address previousNonceManager, address newNonceManager);
 
     error EIDCannotBeZero();
     error ChainIDCannotBeZero();
@@ -22,6 +23,15 @@ interface IShiftOApp {
     error RefundAddressCannotBeZero();
     error InvalidNonce(uint32 srcEid, bytes32 sender, uint64 nonce);
     error InvalidSkipNonce(uint32 srcEid, bytes32 sender, uint64 nonce);
+    error OnlyNonceManager(address sender);
+    error NonceManagerAlreadySet(address nonceManager);
+
+    /**
+     * @notice Sets the nonce manager address
+     * @dev Only callable by the owner. The nonce manager must be different from the current nonce manager
+     * @param _nonceManager The new nonce manager address
+     */
+    function setNonceManager(address _nonceManager) external;
 
     /**
      * @notice Sets the mapping between a chain ID and LayerZero endpoint ID
