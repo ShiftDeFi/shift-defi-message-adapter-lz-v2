@@ -12,6 +12,7 @@ interface IShiftOApp {
     event EidAndChainIdSet(uint32 eid, uint256 chainId);
     event RouterSet(address oldRouter, address newRouter);
     event LibraryConfigUpdated(address indexed lib);
+    event NonceManagerUpdated(address previousNonceManager, address newNonceManager);
 
     error EIDCannotBeZero();
     error ChainIDCannotBeZero();
@@ -21,6 +22,16 @@ interface IShiftOApp {
     error RouterNotSet();
     error RefundAddressCannotBeZero();
     error InvalidNonce(uint32 srcEid, bytes32 sender, uint64 nonce);
+    error InvalidSkipNonce(uint32 srcEid, bytes32 sender, uint64 nonce);
+    error OnlyNonceManager(address sender);
+    error NonceManagerAlreadySet(address nonceManager);
+
+    /**
+     * @notice Sets the nonce manager address
+     * @dev Only callable by the owner. The nonce manager must be different from the current nonce manager
+     * @param _nonceManager The new nonce manager address
+     */
+    function setNonceManager(address _nonceManager) external;
 
     /**
      * @notice Sets the mapping between a chain ID and LayerZero endpoint ID
@@ -99,4 +110,12 @@ interface IShiftOApp {
      */
 
     function setConfig(address _lib, SetConfigParam[] calldata _params) external;
+
+    /**
+     * @notice skips exactly the next‐in‐line message, and keeps LZ mapping in perfect sync
+     * @param srcEid the LayerZero source chain ID
+     * @param sender the address of the remote sender (packed as bytes32)
+     * @param nonce  the nonce to skip — must equal nextNonce(_srcEid,_sender)
+     */
+    function skipInboundMessage(uint32 srcEid, bytes32 sender, uint64 nonce) external;
 }
