@@ -113,7 +113,7 @@ contract ShiftOAppTest is Base {
         Origin memory origin = Origin({
             srcEid: l1Fork.eid,
             sender: bytes32(uint256(uint160(address(l1Peer)))),
-            nonce: uint64(vm.randomUint(0, type(uint64).max))
+            nonce: uint64(1)
         });
 
         bytes32 expectedGuid = bytes32("guid");

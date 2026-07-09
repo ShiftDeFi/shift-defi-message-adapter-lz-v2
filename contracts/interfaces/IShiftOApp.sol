@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+import {SetConfigParam} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessageLibManager.sol";
+
 /**
  * @title IShiftOApp
  * @notice Interface for Shift DeFi LayerZero OApp implementation
@@ -9,6 +11,8 @@ pragma solidity ^0.8.22;
 interface IShiftOApp {
     event EidAndChainIdSet(uint32 eid, uint256 chainId);
     event RouterSet(address oldRouter, address newRouter);
+    event LibraryConfigUpdated(address indexed lib);
+    event NonceManagerUpdated(address previousNonceManager, address newNonceManager);
 
     error EIDCannotBeZero();
     error ChainIDCannotBeZero();
@@ -17,6 +21,17 @@ interface IShiftOApp {
     error OnlyRouter(address sender);
     error RouterNotSet();
     error RefundAddressCannotBeZero();
+    error InvalidNonce(uint32 srcEid, bytes32 sender, uint64 nonce);
+    error InvalidSkipNonce(uint32 srcEid, bytes32 sender, uint64 nonce);
+    error OnlyNonceManager(address sender);
+    error NonceManagerAlreadySet(address nonceManager);
+
+    /**
+     * @notice Sets the nonce manager address
+     * @dev Only callable by the owner. The nonce manager must be different from the current nonce manager
+     * @param _nonceManager The new nonce manager address
+     */
+    function setNonceManager(address _nonceManager) external;
 
     /**
      * @notice Sets the mapping between a chain ID and LayerZero endpoint ID
@@ -71,7 +86,11 @@ interface IShiftOApp {
      * @param gasLimit The gas limit for message execution on the destination chain
      * @return Encoded bytes containing the three parameters
      */
-    function encodeParams(address refundAddress, uint256 nativeFee, uint128 gasLimit) external pure returns (bytes memory);
+    function encodeParams(
+        address refundAddress,
+        uint256 nativeFee,
+        uint128 gasLimit
+    ) external pure returns (bytes memory);
 
     /**
      * @notice Decodes fee parameters from a bytes array
@@ -82,4 +101,21 @@ interface IShiftOApp {
      * @return gasLimit The decoded gas limit for message execution
      */
     function decodeParams(bytes memory params) external pure returns (address, uint256, uint128);
+
+    /**
+     * @notice Sets LayerZero configuration parameters for a specified library
+     * @dev Only callable by the contract owner. Passes configuration parameters to the LayerZero endpoint's setConfig function.
+     * @param _lib The address of the LayerZero library to configure
+     * @param _params An array of configuration parameters for the given library
+     */
+
+    function setConfig(address _lib, SetConfigParam[] calldata _params) external;
+
+    /**
+     * @notice skips exactly the next‐in‐line message, and keeps LZ mapping in perfect sync
+     * @param srcEid the LayerZero source chain ID
+     * @param sender the address of the remote sender (packed as bytes32)
+     * @param nonce  the nonce to skip — must equal nextNonce(_srcEid,_sender)
+     */
+    function skipInboundMessage(uint32 srcEid, bytes32 sender, uint64 nonce) external;
 }

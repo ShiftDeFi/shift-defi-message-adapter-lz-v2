@@ -32,6 +32,7 @@ abstract contract Base is Test {
     address SENDER = makeAddr("sender");
     address OWNER = makeAddr("owner");
     address REFUND = makeAddr("refund");
+    address NONCE_MANAGER = makeAddr("nonceManager");
 
     MockMessageRouter l2MockMessageRouter;
 
@@ -45,10 +46,10 @@ abstract contract Base is Test {
         l2ForkId = vm.createFork(l2Fork.rpc);
 
         vm.selectFork(l1ForkId);
-        l1Peer = new ShiftOApp(l1Fork.lzEndpoint, OWNER, SENDER);
+        l1Peer = new ShiftOApp(l1Fork.lzEndpoint, OWNER, SENDER, NONCE_MANAGER);
         vm.selectFork(l2ForkId);
         l2MockMessageRouter = new MockMessageRouter();
-        l2Peer = new ShiftOApp(l2Fork.lzEndpoint, OWNER, address(l2MockMessageRouter));
+        l2Peer = new ShiftOApp(l2Fork.lzEndpoint, OWNER, address(l2MockMessageRouter), NONCE_MANAGER);
 
         vm.selectFork(l1ForkId);
         vm.startPrank(OWNER);
